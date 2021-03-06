@@ -1,0 +1,1 @@
+This repositiory is for demonstating ewald summation
