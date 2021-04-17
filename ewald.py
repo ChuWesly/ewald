@@ -2,7 +2,7 @@
 """
 Calculate the electromagnetic potential in a periodic box. Fisrt we will show 
 The limitation width the traditional approach and then we will implement a 
-ewals summation.
+ewals summation. All xyz are the coordinates in the system and ints.
 Created on Sat Mar  6 16:35:36 2021
 
 @author: Wesly
@@ -13,9 +13,9 @@ import numpy as np
 import math
 import sys
 
-dx = 0.5 # [nm] stepsize x of the periodical box
-dy = 0.5 # [nm] stepsize y of the periodical box
-dz = 0.5 # [nm] stepsize z of the periodical box
+dx = 1 # [nm] stepsize x of the periodical box
+dy = 1 # [nm] stepsize y of the periodical box
+dz = 1 # [nm] stepsize z of the periodical box
 sizex = 10# [nm] size of the periodic box in x
 sizey = 10# [nm] size of the periodic box in y
 sizez = 10# [nm] size of the periodic box in z
@@ -23,6 +23,7 @@ e0 = 8.854e-12 # [F/m] vacuum permittivity
 er = 1 #[-] relative epermittivity
 qe = 1.602e-19 # [C] electron charge
 lengthunit = 1e-9 #[-] scaling factor from meter to nm since distance are given in nm
+N_cubes = 2 # number of summation cubes around the cell. 1 means only the original cell is taken into account
 
 def CoulombPotential(r, q):
     '''return electric potential (V) as function of distance (r) and charge (q)
@@ -42,7 +43,7 @@ def plot1dpotential(xvalues, yvalues, name = '1dpot'):
     
 def plot2dheatmap(pot, name = '2dpot'):
     '''plot potential in 2d heatmap'''
-    fig = plt.figure(1, figsize=((4,3)))
+    fig = plt.figure(1, figsize=((8,6)))
     ax = fig.add_subplot(111)
     heat = ax.imshow(pot, cmap='viridis')
     bar = plt.colorbar(heat)
@@ -53,12 +54,12 @@ def plot2dheatmap(pot, name = '2dpot'):
     plt.show()
     plt.close(fig)
 
-class charge():
+class chargeclass():
     '''class for holding charges and its xyz coordinate. The xyz coordinates 
     are in system coordinates so q is float and xyz positive ints'''
     def __init__(self, q, x, y, z):
-        if not (isinstance(x, int) and isinstance(y, int) and isinstance(z, int)):
-            sys.exit("coordinates for charge are not ints")
+        assert isinstance(x, int) and isinstance(y, int) and isinstance(z, int), \
+            "coordinates for charge are not ints"
         self.q = q
         self.x = x
         self.y = y
@@ -77,8 +78,15 @@ class grid():
     def add_charge(self, charge):
         '''adds one charge the system and calculates the potential'''
         self.charges.append(charge)
-        chargepot = self.calcpot(charge)
-        self.pot += chargepot
+        for i in range(-N_cubes, N_cubes+1):
+            x = charge.x + i*self.Nx
+            for j in range(-N_cubes, N_cubes+1):
+                y = charge.y + j*self.Ny
+                for k in range(-N_cubes, N_cubes+1):
+                    z = charge.z + k*self.Nz
+                    symcharge = chargeclass(charge.q, x, y, z)
+                    chargepot = self.calcpot(symcharge)
+                    self.pot += chargepot
 
     def calcpot(self, charge):
         '''calculation of the potential of one charge xyz are in units of the 
@@ -97,10 +105,14 @@ class grid():
                     pot_charge[x,y,z] = CoulombPotential(dist, charge.q)
         return pot_charge
 
-testcharge = charge(qe,3,2,0)
-mincharge = charge(-qe,3,3,0)
 test_grid = grid()
-test_grid.add_charge(testcharge)
-test_grid.add_charge(mincharge)
-heatmap = test_grid.pot[:,:,0]
+for i in range(2):
+    for j in range(2):
+        for k in range(2):
+            testcharge = chargeclass(qe*(-1)**(i+j+k),i,j,k)
+            test_grid.add_charge(testcharge)
+            
+heatmap = test_grid.pot[:,:,1]
 plot2dheatmap(heatmap)
+madelung = test_grid.pot[1,1,1]*lengthunit*4*math.pi*e0*er/qe
+print(madelung)
