@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Calculate the electromagnetic potential in a periodic box. Fisrt we will show 
-The limitation width the traditional approach and then we will implement a 
-ewals summation. All xyz are the coordinates in the system and ints.
+Calculate the electromagnetic potential in a periodic box. We will show how to 
+implement the cubic method and calculate the madellung constant of rocksalt. 
+All xyz are the coordinates in the system and ints.
 Created on Sat Mar  6 16:35:36 2021
 
 @author: Wesly
@@ -16,14 +16,14 @@ import sys
 dx = 1 # [nm] stepsize x of the periodical box
 dy = 1 # [nm] stepsize y of the periodical box
 dz = 1 # [nm] stepsize z of the periodical box
-sizex = 10# [nm] size of the periodic box in x
-sizey = 10# [nm] size of the periodic box in y
-sizez = 10# [nm] size of the periodic box in z
+sizex = 2# [nm] size of the periodic box in x
+sizey = 2# [nm] size of the periodic box in y
+sizez = 2# [nm] size of the periodic box in z
 e0 = 8.854e-12 # [F/m] vacuum permittivity
 er = 1 #[-] relative epermittivity
 qe = 1.602e-19 # [C] electron charge
 lengthunit = 1e-9 #[-] scaling factor from meter to nm since distance are given in nm
-N_cubes = 2 # number of summation cubes around the cell. 1 means only the original cell is taken into account
+N_cubes = 8 # number of summation cubes around the cell. 1 means only the original cell is taken into account
 
 def CoulombPotential(r, q):
     '''return electric potential (V) as function of distance (r) and charge (q)
@@ -106,6 +106,9 @@ class grid():
         return pot_charge
 
 test_grid = grid()
+# test_grid.add_charge(chargeclass(qe,0,0,0))
+# test_grid.add_charge(chargeclass(-qe,3,3,0))
+#adding the charges of rocksalt NaCl
 for i in range(2):
     for j in range(2):
         for k in range(2):
@@ -114,5 +117,5 @@ for i in range(2):
             
 heatmap = test_grid.pot[:,:,1]
 plot2dheatmap(heatmap)
-madelung = test_grid.pot[1,1,1]*lengthunit*4*math.pi*e0*er/qe
+madelung = test_grid.pot[0,0,0]*lengthunit*4*math.pi*e0*er/qe
 print(madelung)
